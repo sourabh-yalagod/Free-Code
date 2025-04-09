@@ -15,7 +15,9 @@
   "dependencies": {
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.1",
+    "bull": "^4.16.5",
     "cors": "^2.8.5",
+    "dockerode": "^4.0.5",
     "dotenv": "^16.4.7",
     "express": "^5.1.0",
     "mongoose": "^8.13.2",
@@ -23,6 +25,7 @@
     "ts-node": "^10.9.2"
   },
   "devDependencies": {
+    "@types/dockerode": "^3.3.37",
     "@types/node": "^22.14.0"
   }
 }
