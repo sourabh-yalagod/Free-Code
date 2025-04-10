@@ -1,8 +1,10 @@
 import { jobQueue } from "../app";
 import Docker from "dockerode";
 import ApiError from "../utils/ApiError";
+import ApiResponse from "../utils/ApiRespose";
+import { Code } from "../models/code";
 
-export const handleCodeExecution = () => {
+export const handleCodeExecution = (res: any, jobId: string) => {
   jobQueue.process(async (job) => {
     console.log("\n--- Starting to process job ---");
     const { code, language } = job.data;
@@ -64,8 +66,9 @@ export const handleCodeExecution = () => {
       AttachStderr: true,
       Cmd: command,
     };
+    console.log("🚀 ~ jobQueue.process ~ containerConfig:", containerConfig);
     try {
-      const startTime = new Date();
+      const startTime: any = new Date();
       const container = await docker.createContainer(containerConfig);
       await container.start();
 
@@ -74,8 +77,25 @@ export const handleCodeExecution = () => {
         stderr: true,
         follow: true,
       });
-      logs.on("data", (chunk) => {
-        console.log(chunk.toString());
+
+      // Collect logs
+      logs.on("data", async (chunk) => {
+        const job = await Code.findByIdAndUpdate(
+          jobId,
+          { output: chunk },
+          { new: true }
+        );
+        console.log("🚀 ~ logs.on ~ chunk:", chunk.toString());
+        const endTime: any = new Date();
+        const executionTime = endTime - startTime;
+
+        res.status(201).json(
+          new ApiResponse(201, "Code Ran successfully.", {
+            job,
+            executionTime,
+            startTime,
+          })
+        );
       });
     } catch (error) {
       console.log("Error from Here : ", error);

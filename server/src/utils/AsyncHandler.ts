@@ -1,7 +1,8 @@
-import { NextFunction, Request, RequestHandler, Response } from "express";
+import { NextFunction, Request, RequestHandler } from "express";
+import ApiError from "./ApiError";
 
 export const AsyncHandle = (asyncRequest: RequestHandler) => {
-  return async function (req: Request, res: Response, next: NextFunction) {
+  return async function (req: Request, res: any, next: NextFunction) {
     try {
       await Promise.resolve(asyncRequest(req, res, next));
     } catch (error: any) {
