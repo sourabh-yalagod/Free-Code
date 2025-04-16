@@ -1,24 +1,26 @@
 import express, { Request, Response } from "express";
-import ApiError from "./utils/ApiError";
 import cors from "cors";
 import Queue from "bull";
+import http from "http";
+import { WebSocketServer } from "ws";
 import { config } from "dotenv";
-import { handleCodeExecution } from "./queue/code";
 config();
 
 const app = express();
+const server = http.createServer(app);
+
 app.use(cors({ origin: "*" }));
 app.use(express.json());
-app.get("/test", (req: Request, res: Response) => {
-  res.json({ message: "Everything Right...!" });
-  return;
-});
 
 export const jobQueue = new Queue("jobQueue", {
   redis: { host: "localhost", port: 6379 },
 });
 
+export const wss = new WebSocketServer({ server });
 import codeRouters from "./routers/code";
+import handleSocket from "./utils/handleSocket";
 app.use("/api/code", codeRouters);
 
-export default app;
+wss.on("connection", handleSocket);
+
+export default server;

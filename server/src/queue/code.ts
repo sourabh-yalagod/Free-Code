@@ -4,7 +4,7 @@ import ApiError from "../utils/ApiError";
 import ApiResponse from "../utils/ApiRespose";
 import { Code } from "../models/code";
 
-export const handleCodeExecution = (res: any, jobId: string) => {
+export const handleCodeExecution = async (res: any, jobId: string) => {
   jobQueue.process(async (job) => {
     console.log("\n--- Starting to process job ---");
     const { code, language } = job.data;
@@ -66,7 +66,6 @@ export const handleCodeExecution = (res: any, jobId: string) => {
       AttachStderr: true,
       Cmd: command,
     };
-    console.log("🚀 ~ jobQueue.process ~ containerConfig:", containerConfig);
     try {
       const startTime: any = new Date();
       const container = await docker.createContainer(containerConfig);
@@ -82,13 +81,11 @@ export const handleCodeExecution = (res: any, jobId: string) => {
       logs.on("data", async (chunk) => {
         const job = await Code.findByIdAndUpdate(
           jobId,
-          { output: chunk },
+          { output: chunk.toString() },
           { new: true }
         );
-        console.log("🚀 ~ logs.on ~ chunk:", chunk.toString());
         const endTime: any = new Date();
         const executionTime = endTime - startTime;
-
         res.status(201).json(
           new ApiResponse(201, "Code Ran successfully.", {
             job,
@@ -100,8 +97,8 @@ export const handleCodeExecution = (res: any, jobId: string) => {
     } catch (error) {
       console.log("Error from Here : ", error);
       throw new ApiError(501, "Docker Container Error : " + error);
+    } finally {
+      return;
     }
-    console.log("Finished processing job:", job.id);
-    return { result: "success" };
   });
 };
